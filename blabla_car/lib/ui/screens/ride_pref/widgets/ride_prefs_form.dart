@@ -1,7 +1,12 @@
+import 'package:blabla_car/ui/screens/ride_pref/widgets/ride_prefs_input.dart';
+import 'package:blabla_car/ui/screens/ride_pref/ride_location_picker_screen.dart';
+import 'package:blabla_car/ui/theme/theme.dart';
+import 'package:blabla_car/ui/widgets/actions/bla_button.dart';
 import 'package:blabla_car/ui/widgets/display/bla_divider.dart';
 import 'package:blabla_car/utils/date_time_utils.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../data/dummy_data.dart';
 import '../../../../model/ride/locations.dart';
 import '../../../../model/ride_pref/ride_pref.dart';
 
@@ -37,17 +42,82 @@ class _RidePrefFormState extends State<RidePrefForm> {
   @override
   void initState() {
     super.initState();
-    // TODO
+    //TODO
+    if (widget.initRidePref != null) {
+      departure = widget.initRidePref!.departure;
+      arrival = widget.initRidePref!.arrival;
+      departureDate = widget.initRidePref!.departureDate;
+      requestedSeats = widget.initRidePref!.requestedSeats;
+    } else {
+      // If no given preferences, we select default ones :
+      departure = null; // User shall select the departure
+      departureDate = DateTime.now(); // Now  by default
+      arrival = null; // User shall select the arrival
+      requestedSeats = 1; // 1 seat book by default
+    }
   }
 
   // ----------------------------------
   // Handle events
   // ----------------------------------
+  void onDeparturePressed() async {
+    final selectedLocation = await Navigator.of(context).push<Location?>(
+      MaterialPageRoute(
+        builder: (context) => RideLocationPickerScreen(
+          locations: fakeLocations,
+        ),
+      ),
+    );
+
+    if (selectedLocation == null) return;
+
+    setState(() {
+      departure = selectedLocation;
+    });
+  }
+
+  void onArrivalPressed() async {
+    final selectedLocation = await Navigator.of(context).push<Location?>(
+      MaterialPageRoute(
+        builder: (context) => RideLocationPickerScreen(
+          locations: fakeLocations,
+        ),
+      ),
+    );
+
+    if (selectedLocation == null) return;
+
+    setState(() {
+      arrival = selectedLocation;
+    });
+  }
+
+  void onSwappingLocationPressed() {
+    setState(() {
+      if (departure != null || arrival != null) {
+        setState(() {
+          final temp = departure;
+          departure = arrival;
+          arrival = temp;
+        });
+      }
+    });
+  }
 
   // ----------------------------------
   // Compute the widgets rendering
   // ----------------------------------
+  String get departureLabel =>
+      departure != null ? departure!.name : "Leaving from";
+  String get arrivalLabel => arrival != null ? arrival!.name : "Going to";
 
+  bool get showDeparturePlaceHolder => departure == null;
+  bool get showArrivalPlaceHolder => arrival == null;
+
+  String get dateLabel => DateTimeUtils.formatDateTime(departureDate);
+  String get numberLabel => requestedSeats.toString();
+
+  bool get switchIconVisible => arrival != null || departure != null;
   // ----------------------------------
   // Build the widgets
   // ----------------------------------
@@ -56,64 +126,51 @@ class _RidePrefFormState extends State<RidePrefForm> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [ 
-          RidePrefButton(
-                icon: Icons.circle_outlined,
-                text: departure?.name ?? 'Leaving from',
-                onPressed: () {
-                  
-                },
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(BlaSpacings.m),
+          child: Column(
+            children: [
+              RidePrefInput(
+                isPlaceHolder: showDeparturePlaceHolder,
+                leftIcon: Icons.circle_outlined,
+                text: departureLabel,
+                onPressed: onDeparturePressed,
+                rightIcon: switchIconVisible ? Icons.swap_vert : null,
+                onPressedRightIcon:
+                    switchIconVisible ? onSwappingLocationPressed : null,
               ),
               const BlaDivider(),
-              RidePrefButton(
-                icon: Icons.circle_outlined,
-                text: arrival?.name ?? 'Going to',
-                onPressed: () {
-                  
-                },
+              RidePrefInput(
+                isPlaceHolder: showArrivalPlaceHolder,
+                leftIcon: Icons.circle_outlined,
+                text: arrivalLabel,
+                onPressed: onArrivalPressed,
               ),
               const BlaDivider(),
-              RidePrefButton(
-                icon: Icons.calendar_month,
-                text: DateTimeUtils.formatDateTime(departureDate),
-                onPressed: () {
-                  
-                },
+              RidePrefInput(
+                leftIcon: Icons.calendar_month,
+                text: dateLabel,
+                onPressed: () {},
               ),
               const BlaDivider(),
-              RidePrefButton(
-                icon: Icons.people_alt,
-                text: '$requestedSeats',
-                onPressed: () {
-                  
-                },
+              RidePrefInput(
+                leftIcon: Icons.person_2_outlined,
+                text: numberLabel,
+                onPressed: () {},
               ),
-        ]);
-  }
-}
-
-class RidePrefButton extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback? onPressed;
-
-  const RidePrefButton({
-    super.key,
-    required this.icon,
-    required this.text,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: onPressed ?? () {},
-      style: TextButton.styleFrom(padding: EdgeInsets.zero),
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(text),
-        contentPadding: EdgeInsets.zero,
-      ),
+            ],
+          ),
+        ),
+        BlaButton(
+          text: "Search",
+          onPressed: () {},
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(BlaSpacings.radius),
+            bottomRight: Radius.circular(BlaSpacings.radius),
+          ),
+        )
+      ],
     );
   }
 }
