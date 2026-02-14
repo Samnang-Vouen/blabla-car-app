@@ -1,8 +1,10 @@
 import 'package:blabla_car/ui/screens/ride_pref/widgets/ride_prefs_input.dart';
 import 'package:blabla_car/ui/screens/ride_pref/ride_location_picker_screen.dart';
+import 'package:blabla_car/ui/screens/ride_pref/ride_seat_picker_screen.dart';
 import 'package:blabla_car/ui/theme/theme.dart';
 import 'package:blabla_car/ui/widgets/actions/bla_button.dart';
 import 'package:blabla_car/ui/widgets/display/bla_divider.dart';
+import 'package:blabla_car/utils/animations_util.dart';
 import 'package:blabla_car/utils/date_time_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -62,8 +64,8 @@ class _RidePrefFormState extends State<RidePrefForm> {
   // ----------------------------------
   void onDeparturePressed() async {
     final selectedLocation = await Navigator.of(context).push<Location?>(
-      MaterialPageRoute(
-        builder: (context) => RideLocationPickerScreen(
+      AnimationsUtil.createBottomToTopRoute<Location?>(
+        RideLocationPickerScreen(
           locations: fakeLocations,
         ),
       ),
@@ -78,8 +80,8 @@ class _RidePrefFormState extends State<RidePrefForm> {
 
   void onArrivalPressed() async {
     final selectedLocation = await Navigator.of(context).push<Location?>(
-      MaterialPageRoute(
-        builder: (context) => RideLocationPickerScreen(
+      AnimationsUtil.createBottomToTopRoute<Location?>(
+        RideLocationPickerScreen(
           locations: fakeLocations,
         ),
       ),
@@ -101,6 +103,20 @@ class _RidePrefFormState extends State<RidePrefForm> {
           arrival = temp;
         });
       }
+    });
+  }
+
+  void onSeatsPressed() async {
+    final selectedSeats = await Navigator.of(context).push<int?>(
+      AnimationsUtil.createBottomToTopRoute<int?>(
+        RideSeatPickerScreen(initialSeats: requestedSeats),
+      ),
+    );
+
+    if (selectedSeats == null) return;
+
+    setState(() {
+      requestedSeats = selectedSeats;
     });
   }
 
@@ -157,7 +173,7 @@ class _RidePrefFormState extends State<RidePrefForm> {
               RidePrefInput(
                 leftIcon: Icons.person_2_outlined,
                 text: numberLabel,
-                onPressed: () {},
+                onPressed: onSeatsPressed,
               ),
             ],
           ),
